@@ -16,32 +16,42 @@ func NewBookRepo(ctx *data.DataContext) *BookRepo {
 	return &BookRepo{ctx}
 }
 
-func (r *BookRepo) Insert(book *requestmodels.InsertBookRequest) (*responsemodels.InsertBookResponse, error) {
+func (r *BookRepo) Insert(book requestmodels.InsertBookRequest) (responsemodels.BookResponse, error) {
 
 	newBook, err := mapper.Map[requestmodels.InsertBookRequest, models.Book](book)
+
+	if err != nil {
+		return responsemodels.BookResponse{}, err
+	}
+
+	query := "INSERT INTO books (name, writer, isbn) VALUES (?,?,?);"
+
+	affected, err := data.ExecuteInsert[models.Book](r.ctx, query, newBook)
+
+	if affected != 1 || err != nil {
+		return responsemodels.BookResponse{}, err
+	}
+
+	return mapper.Map[models.Book, responsemodels.BookResponse](newBook)
+}
+
+func (r *BookRepo) GetAll() (responsemodels.GetAllBooksResponse, error) {
+	result, err := r.getAll()
 
 	if err != nil {
 		return nil, err
 	}
 
-	query := "INSERT INTO books (name, writer, isbn) VALUES (?,?,?);"
-
-	affected, err := data.ExecuteInsert[models.Book](r.ctx, query, *newBook)
-
-	if affected != 1 || err != nil {
-		return nil, err
-	}
-
-	return mapper.Map[models.Book, responsemodels.InsertBookResponse](newBook)
+	return mapper.MapSlice[models.Book, responsemodels.BookResponse](result)
 }
 
-func (r *BookRepo) GetAll() ([]models.Book, error) {
+func (r *BookRepo) getAll() ([]models.Book, error) {
 	return data.ExecuteQuery[models.Book](r.ctx, "SELECT * from books;")
 }
 
 func (r *BookRepo) FilterBy(filter func(b models.Book) bool) ([]models.Book, error) {
 
-	all, err := r.GetAll()
+	all, err := r.getAll()
 
 	if err != nil {
 		return nil, err
