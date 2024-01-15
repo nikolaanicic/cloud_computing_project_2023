@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	User     string `json:"user"`
-	Password string `json:"password"`
-	DbName   string `json:"db_name"`
-	DbHost   string `json:"db_host"`
-	City     string `json:"city"`
+	User       string `json:"user"`
+	Password   string `json:"password"`
+	DbName     string `json:"db_name"`
+	DbHost     string `json:"db_host"`
+	City       string `json:"city"`
+	ServerHost string `json:"server_host"`
 }
 
 func LoadConfig(f *os.File) (*Config, error) {

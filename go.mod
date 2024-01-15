@@ -1,4 +1,4 @@
-module city-library
+module rac_oblak_proj
 
 go 1.18
 

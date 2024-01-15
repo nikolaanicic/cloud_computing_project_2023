@@ -1,13 +1,13 @@
 package main
 
 import (
-	"city-library/config"
-	"city-library/data"
-	"city-library/models"
-	"city-library/repositories"
 	"fmt"
 	"log"
 	"os"
+	"rac_oblak_proj/city-lib/config"
+	"rac_oblak_proj/city-lib/data"
+	"rac_oblak_proj/city-lib/repositories"
+	requestmodels "rac_oblak_proj/request_models"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -50,9 +50,9 @@ func main() {
 
 	bookRepo := repositories.NewBookRepo(ctx)
 
-	book := models.NewBook(1, "thus spoke zarathustra", "nietzsche", "1232132131")
+	book := requestmodels.NewInsertBookRequest("thus spoke zarathustra", "nietzsche", "1232132131")
 
-	res, err := bookRepo.Insert(*book)
+	res, err := bookRepo.Insert(&book)
 
 	if err != nil {
 		log.Fatal(err)

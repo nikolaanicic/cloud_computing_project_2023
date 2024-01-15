@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"city-library/data"
-	"city-library/models"
+	"rac_oblak_proj/city-lib/data"
+	"rac_oblak_proj/models"
 )
 
 type RentalRepo struct {

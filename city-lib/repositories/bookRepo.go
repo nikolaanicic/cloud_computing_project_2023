@@ -1,8 +1,11 @@
 package repositories
 
 import (
-	"city-library/data"
-	"city-library/models"
+	"rac_oblak_proj/city-lib/data"
+	"rac_oblak_proj/mapper"
+	"rac_oblak_proj/models"
+	requestmodels "rac_oblak_proj/request_models"
+	responsemodels "rac_oblak_proj/response_models"
 )
 
 type BookRepo struct {
@@ -13,17 +16,23 @@ func NewBookRepo(ctx *data.DataContext) *BookRepo {
 	return &BookRepo{ctx}
 }
 
-func (r *BookRepo) Insert(book models.Book) (models.Book, error) {
+func (r *BookRepo) Insert(book *requestmodels.InsertBookRequest) (*responsemodels.InsertBookResponse, error) {
+
+	newBook, err := mapper.Map[requestmodels.InsertBookRequest, models.Book](book)
+
+	if err != nil {
+		return nil, err
+	}
 
 	query := "INSERT INTO books (name, writer, isbn) VALUES (?,?,?);"
 
-	affected, err := data.ExecuteInsert[models.Book](r.ctx, query, book)
+	affected, err := data.ExecuteInsert[models.Book](r.ctx, query, *newBook)
 
 	if affected != 1 || err != nil {
-		return models.Book{}, err
+		return nil, err
 	}
 
-	return book, nil
+	return mapper.Map[models.Book, responsemodels.InsertBookResponse](newBook)
 }
 
 func (r *BookRepo) GetAll() ([]models.Book, error) {

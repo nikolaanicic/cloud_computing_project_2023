@@ -11,8 +11,10 @@ type Book struct {
 	ISBN   string `json:"isbn"`
 }
 
-func (b *Book) NewEmpty() interface{} {
-	return &Book{}
+func (b Book) AsJson() []byte {
+	data, _ := json.Marshal(b)
+
+	return data
 }
 
 func (b *Book) SetFields(fields []any) {

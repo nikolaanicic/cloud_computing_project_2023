@@ -1,10 +1,10 @@
 package data
 
 import (
-	"city-library/data/data_errors"
-	"city-library/models"
 	"database/sql"
 	"fmt"
+	"rac_oblak_proj/city-lib/data/data_errors"
+	"rac_oblak_proj/models"
 	"time"
 
 	"github.com/go-sql-driver/mysql"

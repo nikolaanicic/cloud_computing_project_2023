@@ -1,8 +1,6 @@
 package repositories
 
-import (
-	"city-library/models"
-)
+import "rac_oblak_proj/models"
 
 type Repository[T models.Querier] interface {
 	Insert(t T) (T, error)
