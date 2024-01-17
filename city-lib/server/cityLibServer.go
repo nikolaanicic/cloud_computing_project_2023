@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -10,14 +9,46 @@ import (
 	requestmodels "rac_oblak_proj/request_models"
 )
 
+var encoding = "application/json"
+
 type CityLibServer struct {
 	rentals *repositories.RentalRepo
 	books   *repositories.BookRepo
 	logger  *log.Logger
+	mux     *http.ServeMux
+	addr    string
+
+	handlers map[string]func(http.ResponseWriter, *http.Request) *HttpErrorResponse
 }
 
 func New() *CityLibServer {
-	return &CityLibServer{}
+	return &CityLibServer{
+		mux:      http.NewServeMux(),
+		handlers: make(map[string]func(http.ResponseWriter, *http.Request) *HttpErrorResponse),
+	}
+}
+
+func (s *CityLibServer) registerHandlers() {
+	s.mux.HandleFunc("/", s.rootHandler)
+
+	s.handlers["/books/getAll"] = s.handleGetAllBooksRequest
+	s.handlers["/books/insert"] = s.handleInsertBookRequest
+
+}
+
+func (s *CityLibServer) Serve() {
+
+	s.registerHandlers()
+
+	s.logger.Println("listening on", s.addr)
+	if err := http.ListenAndServe(s.addr, s.mux); err != nil {
+		s.logger.Fatal(err)
+	}
+}
+
+func (s *CityLibServer) WithHost(host string) *CityLibServer {
+	s.addr = host
+	return s
 }
 
 func (s *CityLibServer) WithLogger(logger *log.Logger) *CityLibServer {
@@ -36,72 +67,73 @@ func (s *CityLibServer) WithRentalsRepo(rentals *repositories.RentalRepo) *CityL
 }
 
 func (s *CityLibServer) setEncodingHeaders(w http.ResponseWriter) {
-
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Content-Type", encoding)
 }
 
-func (s *CityLibServer) HandleGetAllBooksRequest() func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *CityLibServer) middleware(w http.ResponseWriter, r *http.Request) error {
 
-		if r.Method != http.MethodGet {
-			s.logger.Println(ErrBadReqeustMethod(r.Method))
-			http.Error(w, ErrBadRequest(ErrBadReqeustMethod(r.Method)).Error(), http.StatusBadRequest)
+	s.setEncodingHeaders(w)
+
+	return nil
+}
+
+func (s *CityLibServer) rootHandler(w http.ResponseWriter, r *http.Request) {
+	s.logger.Println(r.Method, r.URL.Path, r.Header.Get("Content-Type"))
+
+	if handler, ok := s.handlers[r.URL.Path]; ok {
+		if err := s.middleware(w, r); err != nil {
 			return
-		}
-
-		books, err := s.books.GetAll()
-
-		if err != nil {
-			s.logger.Println(err)
-			http.Error(w, fmt.Sprintf("server error: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		s.setEncodingHeaders(w)
-
-		if _, err := w.Write(books.AsJson()); err != nil {
-			s.logger.Println(err)
-			http.Error(w, fmt.Sprintf("server error: %v", err), http.StatusInternalServerError)
+		} else if err := handler(w, r); err != nil {
+			http.Error(w, err.StatusText, err.StatusCode)
 			return
 		}
 	}
 }
 
-func (s *CityLibServer) HandleInsertBookRequest() func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.Request) *HttpErrorResponse {
 
-		var insertBookRequest requestmodels.InsertBookRequest
+	books, err := s.books.GetAll()
 
-		bodyData, err := io.ReadAll(r.Body)
-
-		if err != nil {
-			s.logger.Println(err)
-			http.Error(w, fmt.Sprintf("can't read request: %v", err), http.StatusInternalServerError)
-			return
-
-		}
-
-		if err := json.Unmarshal(bodyData, &insertBookRequest); err != nil {
-			s.logger.Println(err)
-			http.Error(w, fmt.Sprintf("Bad Request: %v", err), http.StatusBadRequest)
-			return
-		}
-
-		s.logger.Println(insertBookRequest)
-		result, err := s.books.Insert(insertBookRequest)
-
-		if err != nil {
-			s.logger.Println(err)
-			http.Error(w, fmt.Sprintf("Bad Request: %v", err), http.StatusBadRequest)
-			return
-		}
-
-		s.setEncodingHeaders(w)
-
-		if _, err = w.Write(result.AsJson()); err != nil {
-			s.logger.Println(err)
-			http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
-			return
-		}
+	if err != nil {
+		s.logger.Println(err)
+		return NewError(http.StatusInternalServerError)
 	}
+
+	if _, err := w.Write(books.AsJson()); err != nil {
+		s.logger.Println(err)
+		return NewError(http.StatusInternalServerError)
+	}
+
+	return nil
+}
+
+func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.Request) *HttpErrorResponse {
+	var insertBookRequest requestmodels.InsertBookRequest
+
+	bodyData, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		s.logger.Println(err)
+		return NewError(http.StatusBadRequest)
+
+	}
+
+	if err := json.Unmarshal(bodyData, &insertBookRequest); err != nil {
+		s.logger.Println(err)
+		return NewError(http.StatusBadRequest)
+	}
+
+	result, err := s.books.Insert(insertBookRequest)
+
+	if err != nil {
+		s.logger.Println(err)
+		return NewError(http.StatusInternalServerError)
+	}
+
+	if _, err = w.Write(result.AsJson()); err != nil {
+		s.logger.Println(err)
+		return NewError(http.StatusInternalServerError)
+	}
+
+	return nil
 }

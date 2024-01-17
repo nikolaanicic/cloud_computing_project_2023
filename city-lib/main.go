@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 	"rac_oblak_proj/city-lib/config"
 	"rac_oblak_proj/city-lib/data"
@@ -31,7 +30,7 @@ func main() {
 
 	f.Close()
 
-	cfg := mysql.Config{
+	cftg := mysql.Config{
 		User:      appCfg.User,
 		Passwd:    appCfg.Password,
 		Net:       "tcp",
@@ -40,7 +39,7 @@ func main() {
 		ParseTime: true,
 	}
 
-	ctx, err := data.NewDataContext(cfg)
+	ctx, err := data.NewDataContext(cftg)
 
 	if err != nil {
 		logger.Fatal(err)
@@ -51,13 +50,8 @@ func main() {
 	srv := server.New().
 		WithLogger(logger).
 		WithBookRepo(repositories.NewBookRepo(ctx)).
-		WithRentalsRepo(repositories.NewRentalRepo(ctx))
+		WithRentalsRepo(repositories.NewRentalRepo(ctx)).
+		WithHost(appCfg.ServerHost)
 
-	http.HandleFunc("/books/insert", srv.HandleInsertBookRequest())
-	http.HandleFunc("/books/getAll", srv.HandleGetAllBooksRequest())
-
-	logger.Println("listening on", appCfg.ServerHost)
-	if err := http.ListenAndServe(appCfg.ServerHost, nil); err != nil {
-		logger.Fatal(err)
-	}
+	srv.Serve()
 }

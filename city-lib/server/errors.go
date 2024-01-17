@@ -1,11 +1,22 @@
 package server
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
-var ErrBadReqeustMethod = func(method string) error {
-	return fmt.Errorf("invalid method \"%s\"", method)
+type HttpErrorResponse struct {
+	StatusText string `json:"status_text"`
+	StatusCode int    `json:"status_code"`
 }
 
-var ErrBadRequest = func(err error) error {
-	return fmt.Errorf("bad request: %v", err)
+func NewError(statusCode int) *HttpErrorResponse {
+	return &HttpErrorResponse{
+		StatusText: http.StatusText(statusCode),
+		StatusCode: statusCode,
+	}
+}
+
+func (e *HttpErrorResponse) String() string {
+	return fmt.Sprintf("%s %d", e.StatusText, e.StatusCode)
 }
