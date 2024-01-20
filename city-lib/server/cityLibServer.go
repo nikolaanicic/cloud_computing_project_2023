@@ -70,9 +70,13 @@ func (s *CityLibServer) setEncodingHeaders(w http.ResponseWriter) {
 	w.Header().Add("Content-Type", encoding)
 }
 
-func (s *CityLibServer) middleware(w http.ResponseWriter, r *http.Request) error {
+func (s *CityLibServer) middleware(w http.ResponseWriter, r *http.Request) *HttpErrorResponse {
 
 	s.setEncodingHeaders(w)
+
+	if r.Method == http.MethodPost && r.Header.Get("Content-Type") != encoding {
+		return NewError(http.StatusNotAcceptable)
+	}
 
 	return nil
 }
@@ -80,17 +84,24 @@ func (s *CityLibServer) middleware(w http.ResponseWriter, r *http.Request) error
 func (s *CityLibServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	s.logger.Println(r.Method, r.URL.Path, r.Header.Get("Content-Type"))
 
+	writeHttpStatusError := func(err *HttpErrorResponse) {
+		http.Error(w, err.StatusText, err.StatusCode)
+	}
+
 	if handler, ok := s.handlers[r.URL.Path]; ok {
 		if err := s.middleware(w, r); err != nil {
-			return
+			writeHttpStatusError(err)
 		} else if err := handler(w, r); err != nil {
-			http.Error(w, err.StatusText, err.StatusCode)
-			return
+			writeHttpStatusError(err)
 		}
 	}
 }
 
 func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.Request) *HttpErrorResponse {
+
+	if r.Method != http.MethodGet {
+		return NewError(http.StatusMethodNotAllowed)
+	}
 
 	books, err := s.books.GetAll()
 
@@ -108,6 +119,11 @@ func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.
 }
 
 func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.Request) *HttpErrorResponse {
+
+	if r.Method != http.MethodPost {
+		return NewError(http.StatusMethodNotAllowed)
+	}
+
 	var insertBookRequest requestmodels.InsertBookRequest
 
 	bodyData, err := io.ReadAll(r.Body)
