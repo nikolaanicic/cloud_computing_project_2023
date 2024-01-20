@@ -3,7 +3,6 @@ package data_context
 import (
 	"database/sql"
 	"fmt"
-	"rac_oblak_proj/city-lib/data/data_errors"
 	"rac_oblak_proj/models"
 	"time"
 
@@ -89,7 +88,7 @@ func ExecuteQuery[T models.Querier](ctx *DataContext, query string, args ...any)
 		spaces := getFieldSpaces[T]()
 
 		if err := rows.Scan(spaces...); err != nil {
-			return nil, fmt.Errorf("%v: %v", data_errors.ErrInvalidQuery, err)
+			return nil, fmt.Errorf("%v: %v", ErrInvalidQuery, err)
 		}
 
 		t := new(T)

@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 )
@@ -18,7 +19,7 @@ type Config struct {
 func (c *Config) Load(f *os.File) error {
 
 	if f == nil {
-		return ErrInvalidFilename
+		return fmt.Errorf("invalid file pointer")
 	}
 
 	content, err := io.ReadAll(f)
