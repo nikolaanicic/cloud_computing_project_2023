@@ -8,35 +8,6 @@ import (
 	requestmodels "rac_oblak_proj/request_models"
 )
 
-func (s *CityLibServer) registerHandlers() {
-	s.mux.HandleFunc("/", s.rootHandler)
-
-	s.handlers["/books/getAll"] = s.handleGetAllBooksRequest
-	s.handlers["/books/insert"] = s.handleInsertBookRequest
-
-}
-
-func (s *CityLibServer) rootHandler(w http.ResponseWriter, r *http.Request) {
-	s.logger.Println(r.Method, r.URL.Path, r.Header.Get("Content-Type"))
-
-	writeHttpStatusError := func(err *http_errors.HttpErrorResponse) {
-		http.Error(w, err.StatusText, err.StatusCode)
-	}
-
-	if err := s.middleware(w, r); err != nil {
-		writeHttpStatusError(err)
-		return
-	}
-
-	if handler, ok := s.handlers[r.URL.Path]; ok {
-		if err := handler(w, r); err != nil {
-			writeHttpStatusError(err)
-		}
-	} else {
-		writeHttpStatusError(http_errors.NewError(http.StatusNotFound))
-	}
-}
-
 func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 
 	if r.Method != http.MethodGet {
@@ -46,10 +17,10 @@ func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.
 	books, err := s.books.GetAll()
 
 	if err != nil {
-		s.logger.Println(err)
+		s.BaseServer.Logger.Println(err)
 		return http_errors.NewError(http.StatusInternalServerError)
 	} else if _, err := w.Write(books.AsJson()); err != nil {
-		s.logger.Println(err)
+		s.BaseServer.Logger.Println(err)
 		return http_errors.NewError(http.StatusInternalServerError)
 	}
 
@@ -67,25 +38,28 @@ func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.R
 	bodyData, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		s.logger.Println(err)
+		s.BaseServer.Logger.Println(err)
 		return http_errors.NewError(http.StatusBadRequest)
 
 	}
 
 	if err := json.Unmarshal(bodyData, &insertBookRequest); err != nil {
-		s.logger.Println(err)
+		s.BaseServer.Logger.Println(err)
+
 		return http_errors.NewError(http.StatusBadRequest)
 	}
 
 	result, err := s.books.Insert(insertBookRequest)
 
 	if err != nil {
-		s.logger.Println(err)
+		s.BaseServer.Logger.Println(err)
+
 		return http_errors.NewError(http.StatusInternalServerError)
 	}
 
 	if _, err = w.Write(result.AsJson()); err != nil {
-		s.logger.Println(err)
+		s.BaseServer.Logger.Println(err)
+
 		return http_errors.NewError(http.StatusInternalServerError)
 	}
 

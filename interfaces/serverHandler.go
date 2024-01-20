@@ -5,4 +5,4 @@ import (
 	"rac_oblak_proj/errors/http_errors"
 )
 
-type ServerHander func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse
+type ServerHandler func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse
