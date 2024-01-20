@@ -15,23 +15,21 @@ type Config struct {
 	ServerHost string `json:"server_host"`
 }
 
-func LoadConfig(f *os.File) (*Config, error) {
+func (c *Config) Load(f *os.File) error {
 
 	if f == nil {
-		return nil, ErrInvalidFilename
+		return ErrInvalidFilename
 	}
 
 	content, err := io.ReadAll(f)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	cfg := &Config{}
-
-	if err := json.Unmarshal(content, cfg); err != nil {
-		return nil, err
+	if err := json.Unmarshal(content, c); err != nil {
+		return err
 	}
 
-	return cfg, nil
+	return nil
 }

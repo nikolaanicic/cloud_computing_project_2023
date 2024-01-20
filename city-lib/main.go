@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	"rac_oblak_proj/city-lib/application"
+	"rac_oblak_proj/application"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"rac_oblak_proj/city-lib/data"
+	data "rac_oblak_proj/data_context"
 	"rac_oblak_proj/mapper"
 	"rac_oblak_proj/models"
 	requestmodels "rac_oblak_proj/request_models"

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"rac_oblak_proj/city-lib/repositories"
+	"rac_oblak_proj/data_context"
+	"rac_oblak_proj/interfaces"
 	requestmodels "rac_oblak_proj/request_models"
 )
 
@@ -21,11 +23,21 @@ type CityLibServer struct {
 	handlers map[string]func(http.ResponseWriter, *http.Request) *HttpErrorResponse
 }
 
-func New() *CityLibServer {
+func New() interfaces.Server {
 	return &CityLibServer{
 		mux:      http.NewServeMux(),
 		handlers: make(map[string]func(http.ResponseWriter, *http.Request) *HttpErrorResponse),
 	}
+}
+
+func (s *CityLibServer) Configure(logger *log.Logger, data *data_context.DataContext, host string) interfaces.Server {
+	s.setLogger(logger)
+	s.setBookRepo(repositories.NewBookRepo(data))
+	s.setRentalsRepo(repositories.NewRentalRepo(data))
+	s.setHost(host)
+
+	return s
+
 }
 
 func (s *CityLibServer) registerHandlers() {
@@ -46,24 +58,20 @@ func (s *CityLibServer) Serve() {
 	}
 }
 
-func (s *CityLibServer) WithHost(host string) *CityLibServer {
+func (s *CityLibServer) setHost(host string) {
 	s.addr = host
-	return s
 }
 
-func (s *CityLibServer) WithLogger(logger *log.Logger) *CityLibServer {
+func (s *CityLibServer) setLogger(logger *log.Logger) {
 	s.logger = logger
-	return s
 }
 
-func (s *CityLibServer) WithBookRepo(books *repositories.BookRepo) *CityLibServer {
+func (s *CityLibServer) setBookRepo(books *repositories.BookRepo) {
 	s.books = books
-	return s
 }
 
-func (s *CityLibServer) WithRentalsRepo(rentals *repositories.RentalRepo) *CityLibServer {
+func (s *CityLibServer) setRentalsRepo(rentals *repositories.RentalRepo) {
 	s.rentals = rentals
-	return s
 }
 
 func (s *CityLibServer) setEncodingHeaders(w http.ResponseWriter) {
