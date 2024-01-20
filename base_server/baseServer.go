@@ -1,10 +1,13 @@
 package baseserver
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"rac_oblak_proj/errors/http_errors"
+	"rac_oblak_proj/mapper"
 )
 
 var encoding = "application/json"
@@ -42,6 +45,21 @@ func (s *BaseServer) middleware(w http.ResponseWriter, r *http.Request) *http_er
 	}
 
 	return nil
+}
+
+func ReadBody[T mapper.JsonModel](r *http.Request) (*T, error) {
+	var t T
+
+	bodyData, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(bodyData, &t); err != nil {
+		return nil, err
+	}
+
+	return &t, nil
 }
 
 func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {

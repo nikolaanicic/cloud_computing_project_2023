@@ -1,9 +1,8 @@
 package server
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
+	baseserver "rac_oblak_proj/base_server"
 	"rac_oblak_proj/errors/http_errors"
 	requestmodels "rac_oblak_proj/request_models"
 )
@@ -33,23 +32,15 @@ func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.R
 		return http_errors.NewError(http.StatusMethodNotAllowed)
 	}
 
-	var insertBookRequest requestmodels.InsertBookRequest
-
-	bodyData, err := io.ReadAll(r.Body)
+	req, err := baseserver.ReadBody[requestmodels.InsertBookRequest](r)
 
 	if err != nil {
-		s.BaseServer.Logger.Println(err)
-		return http_errors.NewError(http.StatusBadRequest)
-
-	}
-
-	if err := json.Unmarshal(bodyData, &insertBookRequest); err != nil {
-		s.BaseServer.Logger.Println(err)
-
 		return http_errors.NewError(http.StatusBadRequest)
 	}
 
-	result, err := s.books.Insert(insertBookRequest)
+	defer r.Body.Close()
+
+	result, err := s.books.Insert(*req)
 
 	if err != nil {
 		s.BaseServer.Logger.Println(err)

@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"rac_oblak_proj/city-lib/config"
-	"rac_oblak_proj/city-lib/server"
 	data "rac_oblak_proj/data_context"
 	"rac_oblak_proj/interfaces"
 
@@ -18,7 +17,7 @@ type Application struct {
 	ctx    *data.DataContext
 }
 
-func New(configFilename string, logger *log.Logger) (*Application, error) {
+func New(configFilename string, logger *log.Logger, server interfaces.Server) (*Application, error) {
 
 	f, err := os.Open(configFilename)
 
@@ -47,11 +46,9 @@ func New(configFilename string, logger *log.Logger) (*Application, error) {
 		return nil, err
 	}
 
-	srv := server.New().Configure(logger, ctx, cfg.ServerHost)
-
 	return &Application{
 		config: cfg,
-		server: srv,
+		server: server.Configure(logger, ctx, cfg.ServerHost),
 		logger: logger,
 		ctx:    ctx,
 	}, nil

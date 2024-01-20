@@ -38,8 +38,8 @@ func (r *UserRepo) Insert(user requestmodels.InsertUserRequest) (responsemodels.
 		return responsemodels.InsertUserResponse{}, err
 	}
 
-	user.Password = r.hashUser(user.Username, user.Password)
-	query := "INSERT INTO users (name, last_name, username, password) VALUES (?,?,?,?,?)"
+	newUser.Password = r.hashUser(user.Username, user.Password)
+	query := "INSERT INTO users (name, last_name, username, password) VALUES (?,?,?,?)"
 
 	affected, err := data_context.ExecuteInsert[models.User](r.ctx, query, newUser)
 

@@ -18,11 +18,11 @@ func (u User) AsJson() []byte {
 }
 
 func (u User) FieldTypes() []string {
-	return []string{"int64", "string", "string", "string", "string", "int64"}
+	return []string{"string", "string", "string", "string"}
 }
 
 func (u User) DataFields() []any {
-	return []any{u.ID, u.Name, u.LastName, u.Username, u.Password, u.Rentals}
+	return []any{u.Name, u.LastName, u.Username, u.Password}
 }
 
 func (u *User) SetFields(fields []any) {

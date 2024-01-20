@@ -9,7 +9,6 @@ type InsertUserResponse struct {
 	Name     string `json:"name"`
 	LastName string `json:"last_name"`
 	Username string `json:"username"`
-	Password string `json:"password"`
 }
 
 func (r *InsertUserResponse) String() string {
@@ -27,6 +26,5 @@ func NewInsertUserRequest(name, lastName, username, password string) InsertUserR
 		Name:     name,
 		LastName: lastName,
 		Username: username,
-		Password: password,
 	}
 }
