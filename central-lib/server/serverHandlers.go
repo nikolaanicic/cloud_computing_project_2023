@@ -25,7 +25,7 @@ func (s *CentralLibServer) handleInsertUser(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		s.BaseServer.Logger.Println(err)
-		return http_errors.NewError(http.StatusInternalServerError)
+		return http_errors.NewError(http.StatusConflict)
 	}
 
 	return baseserver.PackResponse(result, w, s.BaseServer.Logger)
