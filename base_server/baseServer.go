@@ -62,6 +62,16 @@ func ReadBody[T mapper.JsonModel](r *http.Request) (*T, error) {
 	return &t, nil
 }
 
+func PackResponse[T mapper.JsonModel](response T, w http.ResponseWriter, logger *log.Logger) *http_errors.HttpErrorResponse {
+
+	if _, err := w.Write(response.AsJson()); err != nil {
+		logger.Println(err)
+		return http_errors.NewError(http.StatusInternalServerError)
+	}
+
+	return nil
+}
+
 func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	s.Logger.Println(r.Method, r.URL.Path, r.Header.Get("Content-Type"))
 

@@ -18,12 +18,9 @@ func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.
 	if err != nil {
 		s.BaseServer.Logger.Println(err)
 		return http_errors.NewError(http.StatusInternalServerError)
-	} else if _, err := w.Write(books.AsJson()); err != nil {
-		s.BaseServer.Logger.Println(err)
-		return http_errors.NewError(http.StatusInternalServerError)
 	}
 
-	return nil
+	return baseserver.PackResponse(books, w, s.BaseServer.Logger)
 }
 
 func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
@@ -48,11 +45,5 @@ func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.R
 		return http_errors.NewError(http.StatusInternalServerError)
 	}
 
-	if _, err = w.Write(result.AsJson()); err != nil {
-		s.BaseServer.Logger.Println(err)
-
-		return http_errors.NewError(http.StatusInternalServerError)
-	}
-
-	return nil
+	return baseserver.PackResponse(result, w, s.BaseServer.Logger)
 }
