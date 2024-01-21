@@ -2,10 +2,10 @@ package interfaces
 
 import (
 	"log"
-	"rac_oblak_proj/data_context"
+	"rac_oblak_proj/config"
 )
 
 type Server interface {
 	Serve()
-	Configure(logger *log.Logger, data *data_context.DataContext, host string) Server
+	Configure(logger *log.Logger, config *config.Config) (Server, error)
 }

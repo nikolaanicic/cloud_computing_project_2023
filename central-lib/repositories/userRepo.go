@@ -27,15 +27,15 @@ func (r *UserRepo) hashUser(username, password string) string {
 	return hex.EncodeToString(hashed[:])
 }
 
-func (r *UserRepo) validatePassword(hashed string, username string, password string) bool {
+func (r *UserRepo) ValidatePassword(hashed string, username string, password string) bool {
 	return r.hashUser(username, password) == hashed
 }
 
-func (r *UserRepo) Insert(user requestmodels.InsertUserRequest) (responsemodels.InsertUserResponse, error) {
+func (r *UserRepo) Insert(user requestmodels.InsertUserRequest) (responsemodels.UserResponse, error) {
 	newUser, err := mapper.Map[requestmodels.InsertUserRequest, models.User](user)
 
 	if err != nil {
-		return responsemodels.InsertUserResponse{}, err
+		return responsemodels.UserResponse{}, err
 	}
 
 	newUser.Password = r.hashUser(user.Username, user.Password)
@@ -44,8 +44,21 @@ func (r *UserRepo) Insert(user requestmodels.InsertUserRequest) (responsemodels.
 	affected, err := data_context.ExecuteInsert[models.User](r.ctx, query, newUser)
 
 	if affected != 1 || err != nil {
-		return responsemodels.InsertUserResponse{}, err
+		return responsemodels.UserResponse{}, err
 	}
 
-	return mapper.Map[models.User, responsemodels.InsertUserResponse](newUser)
+	return mapper.Map[models.User, responsemodels.UserResponse](newUser)
+}
+
+func (r *UserRepo) GetByUsername(username string) (models.User, error) {
+
+	query := "SELECT * from users where username = ?;"
+
+	result, err := data_context.ExecuteQuery[models.User](r.ctx, query, username)
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return result[0], nil
 }

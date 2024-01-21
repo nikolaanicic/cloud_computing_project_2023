@@ -13,7 +13,7 @@ func (s *CentralLibServer) handleInsertUser(w http.ResponseWriter, r *http.Reque
 		return http_errors.NewError(http.StatusMethodNotAllowed)
 	}
 
-	req, err := baseserver.ReadBody[requestmodels.InsertUserRequest](r)
+	req, err := baseserver.ReadBody[requestmodels.InsertUserRequest](r.Body)
 
 	if err != nil {
 		return http_errors.NewError(http.StatusBadRequest)
@@ -29,4 +29,28 @@ func (s *CentralLibServer) handleInsertUser(w http.ResponseWriter, r *http.Reque
 	}
 
 	return baseserver.PackResponse(result, w, s.BaseServer.Logger)
+}
+
+func (s *CentralLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+	if r.Method != http.MethodPost {
+		return http_errors.NewError(http.StatusMethodNotAllowed)
+	}
+
+	req, err := baseserver.ReadBody[requestmodels.UserLoginRequest](r.Body)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusBadRequest)
+	}
+
+	defer r.Body.Close()
+
+	user, err := s.userRepo.GetByUsername(req.Username)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusNotFound)
+	} else if !s.userRepo.ValidatePassword(user.Password, user.Username, req.Password) {
+		return http_errors.NewError(http.StatusUnauthorized)
+	}
+
+	return baseserver.PackResponse(user, w, s.BaseServer.Logger)
 }

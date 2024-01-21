@@ -18,7 +18,7 @@ func (u User) AsJson() []byte {
 }
 
 func (u User) FieldTypes() []string {
-	return []string{"string", "string", "string", "string"}
+	return []string{"int64", "string", "string", "string", "string", "int64"}
 }
 
 func (u User) DataFields() []any {

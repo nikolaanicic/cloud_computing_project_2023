@@ -1,11 +1,13 @@
 package baseserver
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"rac_oblak_proj/data_context"
 	"rac_oblak_proj/errors/http_errors"
 	"rac_oblak_proj/mapper"
 )
@@ -17,14 +19,16 @@ type BaseServer struct {
 	mux      *http.ServeMux
 	host     string
 	handlers map[string]func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse
+	ctx      *data_context.DataContext
 }
 
-func New(host string, logger *log.Logger) *BaseServer {
+func New(host string, logger *log.Logger, ctx *data_context.DataContext) *BaseServer {
 	return &BaseServer{
 		handlers: make(map[string]func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse),
 		host:     host,
 		Logger:   logger,
 		mux:      http.NewServeMux(),
+		ctx:      ctx,
 	}
 }
 
@@ -47,10 +51,10 @@ func (s *BaseServer) middleware(w http.ResponseWriter, r *http.Request) *http_er
 	return nil
 }
 
-func ReadBody[T mapper.JsonModel](r *http.Request) (*T, error) {
+func ReadBody[T mapper.JsonModel](body io.ReadCloser) (*T, error) {
 	var t T
 
-	bodyData, err := io.ReadAll(r.Body)
+	bodyData, err := io.ReadAll(body)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +74,10 @@ func PackResponse[T mapper.JsonModel](response T, w http.ResponseWriter, logger 
 	}
 
 	return nil
+}
+
+func PostData[T mapper.JsonModel](data T, url string) (*http.Response, error) {
+	return http.Post(url, encoding, bytes.NewBuffer(data.AsJson()))
 }
 
 func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -95,10 +103,13 @@ func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func (bs *BaseServer) Serve() {
 	bs.mux.HandleFunc("/", bs.rootHandler)
-
 	bs.Logger.Println("listening on", bs.host)
+
+	defer bs.ctx.Close()
+
 	if err := http.ListenAndServe(bs.host, bs.mux); err != nil {
 		bs.Logger.Fatal(err)
+
 	}
 }
 

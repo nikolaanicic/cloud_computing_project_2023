@@ -20,7 +20,5 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	if err := app.Run(); err != nil {
-		log.Fatal(err)
-	}
+	app.Run()
 }

@@ -6,16 +6,12 @@ type Querier interface {
 }
 
 func SetFields(t interface{}, fields []any) {
-	b, ok := (t).(*Book)
-
-	if ok {
-		b.SetFields(fields)
-		return
-	}
-
-	r, ok := (t).(*Rental)
-
-	if ok {
-		r.SetFields(fields)
+	switch tp := t.(type) {
+	case *Book:
+		tp.SetFields(fields)
+	case *Rental:
+		tp.SetFields(fields)
+	case *User:
+		tp.SetFields(fields)
 	}
 }
