@@ -80,6 +80,28 @@ func PostData[T mapper.JsonModel](data T, url string) (*http.Response, error) {
 	return http.Post(url, encoding, bytes.NewBuffer(data.AsJson()))
 }
 
+func (b *BaseServer) GetReadHttpErrFunc(body io.ReadCloser) func() *http_errors.HttpErrorResponse {
+	return func() *http_errors.HttpErrorResponse {
+		data, err := ReadBody[http_errors.HttpErrorResponse](body)
+
+		if err != nil {
+			return http_errors.NewError(http.StatusInternalServerError)
+		}
+
+		defer body.Close()
+
+		return data
+	}
+}
+
+func ParseResponse(response *http.Response, success func() *http_errors.HttpErrorResponse, failure func() *http_errors.HttpErrorResponse) *http_errors.HttpErrorResponse {
+	if response.StatusCode == http.StatusOK {
+		return success()
+	} else {
+		return failure()
+	}
+}
+
 func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	s.Logger.Println(r.Method, r.URL.Path, r.Header.Get("Content-Type"))
 

@@ -72,8 +72,7 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 		return http_errors.NewError(http.StatusServiceUnavailable)
 	}
 
-	switch response.StatusCode {
-	case http.StatusOK:
+	success := func() *http_errors.HttpErrorResponse {
 		user, err := baseserver.ReadBody[models.User](response.Body)
 
 		if err != nil {
@@ -84,21 +83,8 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 
 		c.loggedInUsers[user.Username] = user
 
-	case http.StatusUnauthorized:
-	case http.StatusNotFound:
-	case http.StatusServiceUnavailable:
-	case http.StatusBadRequest:
-		data, err := baseserver.ReadBody[http_errors.HttpErrorResponse](response.Body)
-
-		if err != nil {
-			return http_errors.NewError(http.StatusInternalServerError)
-		}
-
-		return data
-
-	default:
-		return http_errors.NewError(http.StatusInternalServerError)
+		return nil
 	}
 
-	return nil
+	return baseserver.ParseResponse(response, success, c.BaseServer.GetReadHttpErrFunc(response.Body))
 }
