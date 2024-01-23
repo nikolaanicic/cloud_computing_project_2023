@@ -1,6 +1,7 @@
 package http_errors
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -19,4 +20,10 @@ func NewError(statusCode int) *HttpErrorResponse {
 
 func (e *HttpErrorResponse) String() string {
 	return fmt.Sprintf("%s %d", e.StatusText, e.StatusCode)
+}
+
+func (h HttpErrorResponse) AsJson() []byte {
+	data, _ := json.Marshal(h)
+
+	return data
 }

@@ -68,23 +68,37 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 
 	response, err := baseserver.PostData(req, "http://"+c.config.CentralServerHost+"/users/login")
 
-	// uraditi hendlanje odgovora po kodu
-	// ako je 200 deserijalizovati korisnika
-	// ako je neki drugi kod deserijalizovati HttpErrorResponse
-
 	if err != nil {
 		return http_errors.NewError(http.StatusServiceUnavailable)
 	}
 
-	user, err := baseserver.ReadBody[models.User](response.Body)
+	switch response.StatusCode {
+	case http.StatusOK:
+		user, err := baseserver.ReadBody[models.User](response.Body)
 
-	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		if err != nil {
+			return http_errors.NewError(http.StatusBadRequest)
+		}
+
+		defer response.Body.Close()
+
+		c.loggedInUsers[user.Username] = user
+
+	case http.StatusUnauthorized:
+	case http.StatusNotFound:
+	case http.StatusServiceUnavailable:
+	case http.StatusBadRequest:
+		data, err := baseserver.ReadBody[http_errors.HttpErrorResponse](response.Body)
+
+		if err != nil {
+			return http_errors.NewError(http.StatusInternalServerError)
+		}
+
+		return data
+
+	default:
+		return http_errors.NewError(http.StatusInternalServerError)
 	}
-
-	defer response.Body.Close()
-
-	c.loggedInUsers[user.Username] = user
 
 	return nil
 }
