@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"rac_oblak_proj/base_server/pipeline"
 	"rac_oblak_proj/data_context"
 	"rac_oblak_proj/errors/http_errors"
 	"rac_oblak_proj/mapper"
@@ -15,20 +16,20 @@ import (
 var encoding = "application/json"
 
 type BaseServer struct {
-	Logger   *log.Logger
-	mux      *http.ServeMux
-	host     string
-	handlers map[string]func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse
-	ctx      *data_context.DataContext
+	Logger    *log.Logger
+	mux       *http.ServeMux
+	host      string
+	pipelines map[string]*pipeline.Pipeline
+	ctx       *data_context.DataContext
 }
 
 func New(host string, logger *log.Logger, ctx *data_context.DataContext) *BaseServer {
 	return &BaseServer{
-		handlers: make(map[string]func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse),
-		host:     host,
-		Logger:   logger,
-		mux:      http.NewServeMux(),
-		ctx:      ctx,
+		pipelines: make(map[string]*pipeline.Pipeline),
+		host:      host,
+		Logger:    logger,
+		mux:       http.NewServeMux(),
+		ctx:       ctx,
 	}
 }
 
@@ -68,8 +69,10 @@ func ReadBody[T mapper.JsonModel](body io.ReadCloser) (*T, error) {
 
 func PackResponse[T mapper.JsonModel](response T, w http.ResponseWriter, logger *log.Logger) *http_errors.HttpErrorResponse {
 
-	if _, err := w.Write(response.AsJson()); err != nil {
-		logger.Println(err)
+	data := response.AsJson()
+
+	if _, err := w.Write(data); err != nil {
+		logger.Println("FAILURE", err)
 		return http_errors.NewError(http.StatusInternalServerError)
 	}
 
@@ -106,6 +109,7 @@ func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	s.Logger.Println(r.Method, r.URL.Path, r.Header.Get("Content-Type"))
 
 	writeHttpStatusError := func(err *http_errors.HttpErrorResponse) {
+		s.Logger.Println(err)
 		http.Error(w, err.StatusText, err.StatusCode)
 	}
 
@@ -114,8 +118,10 @@ func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if handler, ok := s.handlers[r.URL.Path]; ok {
-		if err := handler(w, r); err != nil {
+	if pipeline, ok := s.pipelines[r.URL.Path]; ok {
+		s.Logger.Println("found pipeline:", pipeline)
+
+		if err := pipeline.Execute(w, r); err != nil {
 			writeHttpStatusError(err)
 		}
 	} else {
@@ -135,13 +141,23 @@ func (bs *BaseServer) Serve() {
 	}
 }
 
-func (bs *BaseServer) RegisterHandler(path string, handler func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse) error {
+func (bs *BaseServer) RegisterPipeline(pipeline *pipeline.Pipeline) error {
 
-	if _, ok := bs.handlers[path]; ok {
-		return fmt.Errorf("handler for %s exists", path)
+	if _, ok := bs.pipelines[pipeline.Path]; ok {
+		return fmt.Errorf("handler for %s exists", pipeline.Path)
 	}
 
-	bs.handlers[path] = handler
+	bs.pipelines[pipeline.Path] = pipeline
+
+	bs.Logger.Println("registered pipeline:", pipeline)
 
 	return nil
+}
+
+func (bs *BaseServer) RegisterMiddleware(path string, midFunc func(http.ResponseWriter, *http.Request) *http_errors.HttpErrorResponse) {
+	if p, ok := bs.pipelines[path]; ok {
+		p.RegisterMiddleware(midFunc)
+	}
+
+	bs.Logger.Println("registered middleware for:", path)
 }

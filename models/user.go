@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type User struct {
 	ID       int64  `json:"id"`
@@ -23,6 +26,10 @@ func (u User) FieldTypes() []string {
 
 func (u User) DataFields() []any {
 	return []any{u.Name, u.LastName, u.Username, u.Password}
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf("(%s, %s)", u.Name, u.Username)
 }
 
 func (u *User) SetFields(fields []any) {

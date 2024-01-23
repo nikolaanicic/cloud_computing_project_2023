@@ -62,7 +62,7 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 
 	defer r.Body.Close()
 
-	if _, ok := c.loggedInUsers[req.Username]; ok {
+	if c.sessionmgr.Exists(req.Username) {
 		return http_errors.NewError(http.StatusConflict)
 	}
 
@@ -81,7 +81,9 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 
 		defer response.Body.Close()
 
-		c.loggedInUsers[user.Username] = user
+		c.sessionmgr.AddSession(user)
+
+		c.BaseServer.Logger.Println("RESPONSE:", user.String())
 
 		return nil
 	}

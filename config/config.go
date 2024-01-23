@@ -8,15 +8,16 @@ import (
 )
 
 type Config struct {
-	User              string `json:"user"`
-	Password          string `json:"password"`
-	CityDbName        string `json:"db_name"`
-	CityDbHost        string `json:"db_host"`
-	CentralDbHost     string `json:"central_db_host"`
-	CentralDbName     string `json:"central_db_name"`
-	City              string `json:"city"`
-	CityServer        string `json:"city_server"`
-	CentralServerHost string `json:"central_server"`
+	User              string   `json:"user"`
+	Password          string   `json:"password"`
+	CityDbName        string   `json:"db_name"`
+	CityDbHost        string   `json:"db_host"`
+	CentralDbHost     string   `json:"central_db_host"`
+	CentralDbName     string   `json:"central_db_name"`
+	City              string   `json:"city"`
+	CityServer        string   `json:"city_server"`
+	CentralServerHost string   `json:"central_server"`
+	AllowedHosts      []string `json:"allowed_hosts"`
 }
 
 func (c *Config) Load(f *os.File) error {
@@ -52,4 +53,8 @@ func (c *Config) GetCityDbHost() string {
 
 func (c *Config) GetCentralDbHost() string {
 	return c.CentralDbHost
+}
+
+func (c *Config) GetAllowedHosts() []string {
+	return c.AllowedHosts
 }

@@ -8,4 +8,5 @@ import (
 type Server interface {
 	Serve()
 	Configure(logger *log.Logger, config *config.Config) (Server, error)
+	RegisterPipelines()
 }

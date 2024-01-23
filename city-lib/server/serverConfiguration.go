@@ -44,9 +44,13 @@ func (s *CityLibServer) Configure(logger *log.Logger, config *config.Config) (in
 
 	s.BaseServer = baseserver.New(config.CityServer, logger, ctx)
 
-	s.BaseServer.RegisterHandler("/books/getAll", s.handleGetAllBooksRequest)
-	s.BaseServer.RegisterHandler("/books/insert", s.handleInsertBookRequest)
-	s.BaseServer.RegisterHandler("/users/login", s.handleUserLogin)
+	s.RegisterPipelines()
 
 	return s, nil
+}
+
+func (s *CityLibServer) RegisterPipelines() {
+	for _, p := range s.getPipelines() {
+		s.RegisterPipeline(p)
+	}
 }

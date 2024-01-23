@@ -52,5 +52,7 @@ func (s *CentralLibServer) handleUserLogin(w http.ResponseWriter, r *http.Reques
 		return http_errors.NewError(http.StatusUnauthorized)
 	}
 
+	s.BaseServer.Logger.Println("RESPONSE:", user.String())
+
 	return baseserver.PackResponse(user, w, s.BaseServer.Logger)
 }
