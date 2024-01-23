@@ -38,7 +38,7 @@ func (p *Pipeline) executeMiddleware(w http.ResponseWriter, r *http.Request) *ht
 
 func (p *Pipeline) Execute(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 	if err := p.executeMiddleware(w, r); err != nil {
-		return nil
+		return err
 	}
 
 	return p.handler(w, r)

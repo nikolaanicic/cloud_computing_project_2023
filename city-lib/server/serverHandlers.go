@@ -81,11 +81,11 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 
 		defer response.Body.Close()
 
-		c.sessionmgr.AddSession(user)
+		token := c.sessionmgr.AddSession(user)
 
-		c.BaseServer.Logger.Println("RESPONSE:", user.String())
+		c.BaseServer.Logger.Println("RESPONSE:", "Token:", token.Value)
 
-		return nil
+		return baseserver.PackResponse(token, w, c.BaseServer.Logger)
 	}
 
 	return baseserver.ParseResponse(response, success, c.BaseServer.GetReadHttpErrFunc(response.Body))
