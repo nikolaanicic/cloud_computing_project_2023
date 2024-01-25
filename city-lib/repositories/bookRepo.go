@@ -68,6 +68,18 @@ func (r *BookRepo) FilterBy(filter func(b models.Book) bool) ([]models.Book, err
 	return result, nil
 }
 
+func (r *BookRepo) GetByWriterAndTitle(title, writer string) ([]models.Book, error) {
+	query := "SELECT * from books where name = ? and writer = ?"
+
+	result, err := data.ExecuteQuery[models.Book](r.ctx, query, title, writer)
+
+	if err != nil {
+		return []models.Book{}, err
+	}
+
+	return result, nil
+}
+
 func (r *BookRepo) GetById(id int64) (models.Book, error) {
 
 	query := "SELECT * from books where id = ?;"
@@ -85,7 +97,7 @@ func (r *BookRepo) Remove(b *models.Book) error {
 
 	stmt := "REMOVE FROM books where id = ?;"
 
-	affected, err := data.ExecuteStatement[models.Book](r.ctx, stmt, []int64{b.ID})
+	affected, err := data.ExecuteStatement(r.ctx, stmt, []int64{b.ID})
 
 	if affected != 1 || err != nil {
 		return err

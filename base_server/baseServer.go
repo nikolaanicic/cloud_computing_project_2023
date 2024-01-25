@@ -110,7 +110,8 @@ func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	writeHttpStatusError := func(err *http_errors.HttpErrorResponse) {
 		s.Logger.Println(err)
-		http.Error(w, err.StatusText, err.StatusCode)
+		w.WriteHeader(err.StatusCode)
+		w.Write(err.AsJson())
 	}
 
 	if err := s.middleware(w, r); err != nil {

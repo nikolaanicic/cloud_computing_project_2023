@@ -9,14 +9,14 @@ import (
 var defaultSessionDuration = time.Minute * 10
 
 type Session struct {
-	user    *models.User
+	User    *models.User
 	expires time.Time
 	Token   responsemodels.Token
 }
 
 func New(user *models.User, token responsemodels.Token) *Session {
 	return &Session{
-		user:    user,
+		User:    user,
 		expires: getNewSessionTime(),
 		Token:   token,
 	}

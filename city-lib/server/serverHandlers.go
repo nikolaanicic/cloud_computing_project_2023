@@ -6,14 +6,10 @@ import (
 	"rac_oblak_proj/errors/http_errors"
 	"rac_oblak_proj/models"
 	requestmodels "rac_oblak_proj/request_models"
+	"time"
 )
 
 func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
-
-	if r.Method != http.MethodGet {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
-	}
-
 	books, err := s.books.GetAll()
 
 	if err != nil {
@@ -25,11 +21,6 @@ func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.
 }
 
 func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
-
-	if r.Method != http.MethodPost {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
-	}
-
 	req, err := baseserver.ReadBody[requestmodels.InsertBookRequest](r.Body)
 
 	if err != nil {
@@ -49,10 +40,6 @@ func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.R
 }
 
 func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
-
-	if r.Method != http.MethodPost {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
-	}
 
 	req, err := baseserver.ReadBody[requestmodels.UserLoginRequest](r.Body)
 
@@ -86,6 +73,47 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 		c.BaseServer.Logger.Println("RESPONSE:", "Token:", token.Value)
 
 		return baseserver.PackResponse(token, w, c.BaseServer.Logger)
+	}
+
+	return baseserver.ParseResponse(response, success, c.BaseServer.GetReadHttpErrFunc(response.Body))
+}
+
+func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+
+	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusBadRequest)
+	}
+
+	defer r.Body.Close()
+
+	books, err := c.books.GetByWriterAndTitle(req.BookTitle, req.Writer)
+	if err != nil {
+		return http_errors.NewError(http.StatusNotFound)
+	}
+
+	token := getToken(r)
+
+	user := c.sessionmgr.Get(token).User
+	req.Username = user.Username
+
+	response, err := baseserver.PostData(req, "http://"+c.config.CentralServerHost+"/books/rent")
+
+	if err != nil {
+		return http_errors.NewError(http.StatusServiceUnavailable)
+	}
+
+	success := func() *http_errors.HttpErrorResponse {
+		newRental := models.NewRental(user.ID, books[0].ID, time.Now(), false)
+
+		rental, err := c.rentals.Insert(*newRental)
+
+		if err != nil {
+			return http_errors.NewError(http.StatusInternalServerError)
+		}
+
+		return baseserver.PackResponse(rental, w, c.BaseServer.Logger)
 	}
 
 	return baseserver.ParseResponse(response, success, c.BaseServer.GetReadHttpErrFunc(response.Body))

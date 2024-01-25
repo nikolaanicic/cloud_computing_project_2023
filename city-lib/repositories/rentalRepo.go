@@ -73,7 +73,7 @@ func (r *RentalRepo) Remove(b *models.Rental) error {
 
 	stmt := "REMOVE FROM rentals where id = ?;"
 
-	affected, err := data.ExecuteStatement[models.Rental](r.ctx, stmt, []int64{b.ID})
+	affected, err := data.ExecuteStatement(r.ctx, stmt, []int64{b.ID})
 
 	if affected != 1 || err != nil {
 		return err

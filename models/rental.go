@@ -21,10 +21,10 @@ func (r Rental) DataFields() []any {
 	return []any{r.MemberID, r.BookID, r.RentalDate, r.IsBookReturned}
 }
 
-func (b Rental) String() string {
-	val, _ := json.MarshalIndent(b, "", " ")
+func (b Rental) AsJson() []byte {
+	val, _ := json.Marshal(b)
 
-	return string(val)
+	return val
 }
 
 func (b *Rental) SetFields(fields []any) {
@@ -44,9 +44,9 @@ func (b *Rental) SetFields(fields []any) {
 	b.IsBookReturned = isReturned
 }
 
-func NewRental(id, memberID, bookID int64, rentalDate time.Time, isBookReturned bool) *Rental {
+func NewRental(memberID, bookID int64, rentalDate time.Time, isBookReturned bool) *Rental {
 	return &Rental{
-		ID:             id,
+		ID:             0,
 		MemberID:       memberID,
 		BookID:         bookID,
 		RentalDate:     rentalDate,

@@ -118,7 +118,7 @@ func ExecuteInsert[T models.Querier](ctx *DataContext, query string, data T) (in
 	return result.RowsAffected()
 }
 
-func ExecuteStatement[T models.Querier](ctx *DataContext, statement string, args ...any) (int64, error) {
+func ExecuteStatement(ctx *DataContext, statement string, args ...any) (int64, error) {
 
 	stmt, err := ctx.conn.Prepare(statement)
 

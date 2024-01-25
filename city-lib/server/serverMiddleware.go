@@ -34,3 +34,19 @@ func (s *CityLibServer) Session(w http.ResponseWriter, r *http.Request) *http_er
 		return http_errors.NewError(http.StatusUnauthorized)
 	}
 }
+
+func (s *CityLibServer) PostMethodAllowed(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+	if r.Method != http.MethodPost {
+		return http_errors.NewError(http.StatusMethodNotAllowed)
+	}
+
+	return nil
+}
+
+func (s *CityLibServer) GetMethodAllowed(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+	if r.Method != http.MethodGet {
+		return http_errors.NewError(http.StatusMethodNotAllowed)
+	}
+
+	return nil
+}

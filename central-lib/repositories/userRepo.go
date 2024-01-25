@@ -62,3 +62,18 @@ func (r *UserRepo) GetByUsername(username string) (models.User, error) {
 
 	return result[0], nil
 }
+
+func (r *UserRepo) UpdateRentals(username string, change int64) (models.User, error) {
+	user, err := r.GetByUsername(username)
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	statement := "UPDATE users SET rentals = ? where username = ?;"
+	user.Rentals += change
+
+	_, err = data_context.ExecuteStatement(r.ctx, statement, user.Rentals, username)
+
+	return user, err
+}

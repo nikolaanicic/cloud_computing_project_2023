@@ -7,12 +7,11 @@ import (
 	requestmodels "rac_oblak_proj/request_models"
 )
 
+const (
+	maxRent = 3
+)
+
 func (s *CentralLibServer) handleInsertUser(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
-
-	if r.Method != http.MethodPost {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
-	}
-
 	req, err := baseserver.ReadBody[requestmodels.InsertUserRequest](r.Body)
 
 	if err != nil {
@@ -32,10 +31,6 @@ func (s *CentralLibServer) handleInsertUser(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *CentralLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
-	if r.Method != http.MethodPost {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
-	}
-
 	req, err := baseserver.ReadBody[requestmodels.UserLoginRequest](r.Body)
 
 	if err != nil {
@@ -55,4 +50,31 @@ func (s *CentralLibServer) handleUserLogin(w http.ResponseWriter, r *http.Reques
 	s.BaseServer.Logger.Println("RESPONSE:", user.String())
 
 	return baseserver.PackResponse(user, w, s.BaseServer.Logger)
+}
+
+func (c *CentralLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+
+	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusBadRequest)
+	}
+
+	defer r.Body.Close()
+
+	user, err := c.userRepo.GetByUsername(req.Username)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusNotFound)
+	} else if user.Rentals >= maxRent {
+		return http_errors.NewError(http.StatusConflict)
+	}
+
+	user, err = c.userRepo.UpdateRentals(req.Username, 1)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusInternalServerError)
+	}
+
+	return nil
 }
