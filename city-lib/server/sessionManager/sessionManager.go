@@ -40,9 +40,16 @@ func (m *SessionManager) RemoveSession(token string) {
 	delete(m.sessions, token)
 }
 
-func (m *SessionManager) Exists(token string) bool {
-	_, ok := m.sessions[token]
-	return ok
+func (m *SessionManager) IsValid(token string) bool {
+	ss, ok := m.sessions[token]
+
+	return ok && session.IsValid(ss)
+}
+
+func (m *SessionManager) HasExpired(token string) bool {
+	ss, ok := m.sessions[token]
+
+	return !ok || session.HasExpired(ss)
 }
 
 func (m *SessionManager) Get(token string) *session.Session {

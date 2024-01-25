@@ -27,7 +27,18 @@ func (s *Session) Refresh() {
 }
 
 func HasExpired(s *Session) bool {
+	if s == nil {
+		return true
+	}
 	return time.Now().After(s.expires)
+}
+
+func IsValid(s *Session) bool {
+	if s == nil {
+		return false
+	}
+
+	return time.Now().Before(s.expires)
 }
 
 func getNewSessionTime() time.Time {

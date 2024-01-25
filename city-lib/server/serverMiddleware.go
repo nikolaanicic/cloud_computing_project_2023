@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"rac_oblak_proj/city-lib/server/session"
 	"rac_oblak_proj/errors/http_errors"
 )
 
@@ -17,7 +16,7 @@ func getToken(r *http.Request) string {
 func (s *CityLibServer) Auth(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 	token := getToken(r)
 
-	if token == "" || !s.sessionmgr.Exists(token) {
+	if token == "" || s.sessionmgr.HasExpired(token) {
 		return http_errors.NewError(http.StatusUnauthorized)
 	}
 
@@ -27,10 +26,11 @@ func (s *CityLibServer) Auth(w http.ResponseWriter, r *http.Request) *http_error
 func (s *CityLibServer) Session(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 	token := getToken(r)
 
-	if ss := s.sessionmgr.Get(token); ss != nil && !session.HasExpired(ss) {
-		ss.Refresh()
+	if s.sessionmgr.IsValid(token) {
+		s.sessionmgr.RefreshSession(token)
 		return nil
+	} else {
+		s.sessionmgr.RemoveSession(token)
+		return http_errors.NewError(http.StatusUnauthorized)
 	}
-
-	return http_errors.NewError(http.StatusUnauthorized)
 }

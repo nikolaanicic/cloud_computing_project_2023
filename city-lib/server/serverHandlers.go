@@ -62,7 +62,7 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 
 	defer r.Body.Close()
 
-	if c.sessionmgr.Exists(req.Username) {
+	if c.sessionmgr.IsValid(req.Username) {
 		return http_errors.NewError(http.StatusConflict)
 	}
 
