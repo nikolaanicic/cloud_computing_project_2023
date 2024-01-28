@@ -84,16 +84,16 @@ func (c *CentralLibServer) handleReturnBook(w http.ResponseWriter, r *http.Reque
 	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("unable to read request: %v", err))
 	}
 	defer r.Body.Close()
 
 	if user, err := c.userRepo.GetByUsername(req.Username); err != nil {
-		return http_errors.NewError(http.StatusNotFound)
+		return http_errors.NewError(http.StatusNotFound, fmt.Sprintf("unable to return the book: %v", err))
 	} else if user.Rentals == 0 {
-		return http_errors.NewError(http.StatusConflict)
+		return http_errors.NewError(http.StatusConflict, "don't have a book to return")
 	} else if _, err := c.userRepo.UpdateRentals(req.Username, -1); err != nil {
-		return http_errors.NewError(http.StatusInternalServerError)
+		return http_errors.NewError(http.StatusInternalServerError, fmt.Sprintf("the server failed: %v", err))
 	}
 
 	return nil
