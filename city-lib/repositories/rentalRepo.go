@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"rac_oblak_proj/data_context"
 	data "rac_oblak_proj/data_context"
 	"rac_oblak_proj/models"
 )
@@ -59,6 +60,45 @@ func (r *RentalRepo) GetById(id int64) (models.Rental, error) {
 	}
 
 	return result[0], nil
+}
+
+func (r *RentalRepo) GetByMemberAndBookId(memberId, bookId int64) (models.Rental, error) {
+	query := "SELECT * from rentals where memberid = ? and bookid ? ORDER BY rentaldate desc"
+
+	result, err := data.ExecuteQuery[models.Rental](r.ctx, query, memberId, bookId)
+
+	if err != nil {
+		return models.Rental{}, err
+	}
+
+	return result[0], nil
+}
+
+func (r *RentalRepo) IsBookAvailable(bookID int64) (bool, error) {
+	retval := false
+
+	query := "SELECT * from rentals where bookid = ? ORDER BY rentaldate desc"
+
+	result, err := data.ExecuteQuery[models.Rental](r.ctx, query, bookID)
+
+	if err != nil {
+		return retval, err
+	}
+
+	return result[0].IsBookReturned, nil
+}
+
+func (r *RentalRepo) UpdateIsBookReturned(rentalID int64, value bool) error {
+
+	stmt := "UPDATE rentals SET isbookreturned = ? where id = ?"
+
+	_, err := data_context.ExecuteStatement(r.ctx, stmt, value, rentalID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *RentalRepo) GetByMemberId(memberId int64) ([]models.Rental, error) {

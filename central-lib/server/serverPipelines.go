@@ -26,10 +26,19 @@ func (s *CentralLibServer) rentBookPipeline() *pipeline.Pipeline {
 	return p
 }
 
+func (s *CentralLibServer) returnBookPipeline() *pipeline.Pipeline {
+	p := pipeline.New("/books/return", s.handleReturnBook)
+
+	p.RegisterMiddleware(s.AllowedHost, s.PostMethodAllowed)
+
+	return p
+}
+
 func (c *CentralLibServer) getPipelines() []*pipeline.Pipeline {
 	return []*pipeline.Pipeline{
 		c.insertUserPipeline(),
 		c.loginUserPipeline(),
 		c.rentBookPipeline(),
+		c.returnBookPipeline(),
 	}
 }

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	data "rac_oblak_proj/data_context"
 	"rac_oblak_proj/mapper"
 	"rac_oblak_proj/models"
@@ -75,6 +76,8 @@ func (r *BookRepo) GetByISBN(isbn string) (models.Book, error) {
 
 	if err != nil {
 		return models.Book{}, err
+	} else if len(result) == 0 {
+		return models.Book{}, fmt.Errorf("book with isbn %s can't be found", isbn)
 	}
 
 	return result[0], nil

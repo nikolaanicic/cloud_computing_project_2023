@@ -78,6 +78,48 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 	return baseserver.ParseResponse(response, success, c.BaseServer.GetReadHttpErrFunc(response.Body))
 }
 
+func (c *CityLibServer) handleReturnBook(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+
+	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusBadRequest)
+	}
+
+	defer r.Body.Close()
+
+	book, err := c.books.GetByISBN(req.ISBN)
+	if err != nil {
+		return http_errors.NewError(http.StatusNotFound)
+	}
+
+	token := getToken(r)
+
+	user := c.sessionmgr.Get(token).User
+	req.Username = user.Username
+
+	response, err := baseserver.PostData(req, "http://"+c.config.CentralServerHost+"/books/return")
+
+	if err != nil {
+		return http_errors.NewError(http.StatusServiceUnavailable)
+	}
+
+	success := func() *http_errors.HttpErrorResponse {
+		rental, err := c.rentals.GetByMemberAndBookId(user.ID, book.ID)
+
+		if err != nil {
+			return http_errors.NewError(http.StatusInternalServerError)
+		} else if err := c.rentals.UpdateIsBookReturned(rental.ID, true); err != nil {
+			c.BaseServer.Logger.Println(err)
+			return http_errors.NewError(http.StatusBadRequest)
+		}
+
+		return nil
+	}
+
+	return baseserver.ParseResponse(response, success, c.BaseServer.GetReadHttpErrFunc(response.Body))
+}
+
 func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 
 	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
@@ -91,6 +133,9 @@ func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *
 	book, err := c.books.GetByISBN(req.ISBN)
 	if err != nil {
 		return http_errors.NewError(http.StatusNotFound)
+	} else if ok, err := c.rentals.IsBookAvailable(book.ID); !ok || err != nil {
+		c.BaseServer.Logger.Println(err)
+		return http_errors.NewError(http.StatusConflict)
 	}
 
 	token := getToken(r)

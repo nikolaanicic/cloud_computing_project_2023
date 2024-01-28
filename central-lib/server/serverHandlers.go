@@ -78,3 +78,22 @@ func (c *CentralLibServer) handleRentBook(w http.ResponseWriter, r *http.Request
 
 	return nil
 }
+
+func (c *CentralLibServer) handleReturnBook(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
+
+	if err != nil {
+		return http_errors.NewError(http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	if user, err := c.userRepo.GetByUsername(req.Username); err != nil {
+		return http_errors.NewError(http.StatusNotFound)
+	} else if user.Rentals == 0 {
+		return http_errors.NewError(http.StatusConflict)
+	} else if _, err := c.userRepo.UpdateRentals(req.Username, -1); err != nil {
+		return http_errors.NewError(http.StatusInternalServerError)
+	}
+
+	return nil
+}
