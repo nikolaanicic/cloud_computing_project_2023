@@ -31,8 +31,8 @@ func (r *UserRepo) ValidatePassword(hashed string, username string, password str
 	return r.hashUser(username, password) == hashed
 }
 
-func (r *UserRepo) Insert(user requestmodels.InsertUserRequest) (responsemodels.UserResponse, error) {
-	newUser, err := mapper.Map[requestmodels.InsertUserRequest, models.User](user)
+func (r *UserRepo) Insert(user requestmodels.UserSignUpRequest) (responsemodels.UserResponse, error) {
+	newUser, err := mapper.Map[requestmodels.UserSignUpRequest, models.User](user)
 
 	if err != nil {
 		return responsemodels.UserResponse{}, err

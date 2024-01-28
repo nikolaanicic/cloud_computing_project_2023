@@ -11,8 +11,8 @@ const (
 	maxRent = 3
 )
 
-func (s *CentralLibServer) handleInsertUser(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
-	req, err := baseserver.ReadBody[requestmodels.InsertUserRequest](r.Body)
+func (s *CentralLibServer) handleUserSignUp(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
+	req, err := baseserver.ReadBody[requestmodels.UserSignUpRequest](r.Body)
 
 	if err != nil {
 		return http_errors.NewError(http.StatusBadRequest)

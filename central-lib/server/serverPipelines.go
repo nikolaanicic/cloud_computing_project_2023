@@ -3,7 +3,7 @@ package server
 import "rac_oblak_proj/base_server/pipeline"
 
 func (s *CentralLibServer) insertUserPipeline() *pipeline.Pipeline {
-	p := pipeline.New("/users/insert", s.handleInsertUser)
+	p := pipeline.New("/users/signUp", s.handleUserSignUp)
 
 	p.RegisterMiddleware(s.AllowedHost, s.PostMethodAllowed)
 
