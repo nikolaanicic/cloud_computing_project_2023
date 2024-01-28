@@ -6,13 +6,12 @@ import (
 )
 
 type RentBookRequest struct {
-	Username  string `json:"username"`
-	BookTitle string `json:"name"`
-	Writer    string `json:"writer"`
+	Username string `json:"username"`
+	ISBN     string `json:"isb"`
 }
 
 func (r *RentBookRequest) String() string {
-	return fmt.Sprintf("(%s, %s)", r.BookTitle, r.Writer)
+	return fmt.Sprintf("(%s, %s)", r.Username, r.ISBN)
 }
 
 func (r RentBookRequest) AsJson() []byte {

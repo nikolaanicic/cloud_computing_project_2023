@@ -68,6 +68,18 @@ func (r *BookRepo) FilterBy(filter func(b models.Book) bool) ([]models.Book, err
 	return result, nil
 }
 
+func (r *BookRepo) GetByISBN(isbn string) (models.Book, error) {
+	query := "SELECT * from books where isbn = ?"
+
+	result, err := data.ExecuteQuery[models.Book](r.ctx, query, isbn)
+
+	if err != nil {
+		return models.Book{}, err
+	}
+
+	return result[0], nil
+}
+
 func (r *BookRepo) GetByWriterAndTitle(title, writer string) ([]models.Book, error) {
 	query := "SELECT * from books where name = ? and writer = ?"
 

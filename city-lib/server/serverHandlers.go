@@ -88,7 +88,7 @@ func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *
 
 	defer r.Body.Close()
 
-	books, err := c.books.GetByWriterAndTitle(req.BookTitle, req.Writer)
+	book, err := c.books.GetByISBN(req.ISBN)
 	if err != nil {
 		return http_errors.NewError(http.StatusNotFound)
 	}
@@ -105,7 +105,7 @@ func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *
 	}
 
 	success := func() *http_errors.HttpErrorResponse {
-		newRental := models.NewRental(user.ID, books[0].ID, time.Now(), false)
+		newRental := models.NewRental(user.ID, book.ID, time.Now(), false)
 
 		rental, err := c.rentals.Insert(*newRental)
 
