@@ -87,14 +87,14 @@ func (c *CityLibServer) handleReturnBook(w http.ResponseWriter, r *http.Request)
 	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("unable to read request: %v", err))
 	}
 
 	defer r.Body.Close()
 
 	book, err := c.books.GetByISBN(req.ISBN)
 	if err != nil {
-		return http_errors.NewError(http.StatusNotFound)
+		return http_errors.NewError(http.StatusNotFound, fmt.Sprintf("unable to return the book: %v", err))
 	}
 
 	token := getToken(r)
@@ -105,17 +105,17 @@ func (c *CityLibServer) handleReturnBook(w http.ResponseWriter, r *http.Request)
 	response, err := baseserver.PostData(req, "http://"+c.config.CentralServerHost+"/books/return")
 
 	if err != nil {
-		return http_errors.NewError(http.StatusServiceUnavailable)
+		return http_errors.NewError(http.StatusServiceUnavailable, fmt.Sprintf("unable to return the book: %v", err))
 	}
 
 	success := func() *http_errors.HttpErrorResponse {
 		rental, err := c.rentals.GetByMemberAndBookId(user.ID, book.ID)
 
 		if err != nil {
-			return http_errors.NewError(http.StatusInternalServerError)
+			return http_errors.NewError(http.StatusInternalServerError, fmt.Sprintf("unable to return the book: %v", err))
 		} else if err := c.rentals.UpdateIsBookReturned(rental.ID, true); err != nil {
 			c.BaseServer.Logger.Println(err)
-			return http_errors.NewError(http.StatusBadRequest)
+			return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("unable to return the book: %v", err))
 		}
 
 		return nil
@@ -136,14 +136,7 @@ func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *
 
 	book, err := c.books.GetByISBN(req.ISBN)
 	if err != nil {
-<<<<<<< HEAD
-		return http_errors.NewError(http.StatusNotFound)
-	} else if ok, err := c.rentals.IsBookAvailable(book.ID); !ok || err != nil {
-		c.BaseServer.Logger.Println(err)
-		return http_errors.NewError(http.StatusConflict)
-=======
 		return http_errors.NewError(http.StatusNotFound, fmt.Sprintf("failed to rent a book: %v", err))
->>>>>>> main
 	}
 
 	token := getToken(r)
