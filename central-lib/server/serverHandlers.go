@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	baseserver "rac_oblak_proj/base_server"
 	"rac_oblak_proj/errors/http_errors"
@@ -15,7 +16,7 @@ func (s *CentralLibServer) handleUserSignUp(w http.ResponseWriter, r *http.Reque
 	req, err := baseserver.ReadBody[requestmodels.UserSignUpRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, "failed to read the request")
 	}
 
 	defer r.Body.Close()
@@ -24,7 +25,7 @@ func (s *CentralLibServer) handleUserSignUp(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		s.BaseServer.Logger.Println(err)
-		return http_errors.NewError(http.StatusConflict)
+		return http_errors.NewError(http.StatusConflict, fmt.Sprintf("failed to sign up the user: %v", err))
 	}
 
 	return baseserver.PackResponse(result, w, s.BaseServer.Logger)
@@ -34,7 +35,7 @@ func (s *CentralLibServer) handleUserLogin(w http.ResponseWriter, r *http.Reques
 	req, err := baseserver.ReadBody[requestmodels.UserLoginRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("failed to log in the user: %v", err))
 	}
 
 	defer r.Body.Close()
@@ -42,9 +43,9 @@ func (s *CentralLibServer) handleUserLogin(w http.ResponseWriter, r *http.Reques
 	user, err := s.userRepo.GetByUsername(req.Username)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusNotFound)
+		return http_errors.NewError(http.StatusNotFound, fmt.Sprintf("failed to login the user: %v", err))
 	} else if !s.userRepo.ValidatePassword(user.Password, user.Username, req.Password) {
-		return http_errors.NewError(http.StatusUnauthorized)
+		return http_errors.NewError(http.StatusUnauthorized, "invalid credentials")
 	}
 
 	s.BaseServer.Logger.Println("RESPONSE:", user.String())
@@ -57,7 +58,7 @@ func (c *CentralLibServer) handleRentBook(w http.ResponseWriter, r *http.Request
 	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("failed to rent the book: %v", err))
 	}
 
 	defer r.Body.Close()
@@ -65,15 +66,15 @@ func (c *CentralLibServer) handleRentBook(w http.ResponseWriter, r *http.Request
 	user, err := c.userRepo.GetByUsername(req.Username)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusNotFound)
+		return http_errors.NewError(http.StatusNotFound, fmt.Sprintf("failed to rent the book: %v", err))
 	} else if user.Rentals >= maxRent {
-		return http_errors.NewError(http.StatusConflict)
+		return http_errors.NewError(http.StatusConflict, fmt.Sprintf("failed to rent the book: %v", err))
 	}
 
 	user, err = c.userRepo.UpdateRentals(req.Username, 1)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusInternalServerError)
+		return http_errors.NewError(http.StatusInternalServerError, fmt.Sprintf("failed to rent the book: %v", err))
 	}
 
 	return nil

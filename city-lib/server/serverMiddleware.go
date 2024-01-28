@@ -17,7 +17,7 @@ func (s *CityLibServer) Auth(w http.ResponseWriter, r *http.Request) *http_error
 	token := getToken(r)
 
 	if token == "" || s.sessionmgr.HasExpired(token) {
-		return http_errors.NewError(http.StatusUnauthorized)
+		return http_errors.NewError(http.StatusUnauthorized, "Wrong password or username")
 	}
 
 	return nil
@@ -31,13 +31,13 @@ func (s *CityLibServer) Session(w http.ResponseWriter, r *http.Request) *http_er
 		return nil
 	} else {
 		s.sessionmgr.RemoveSession(token)
-		return http_errors.NewError(http.StatusUnauthorized)
+		return http_errors.NewError(http.StatusUnauthorized, "please log in again")
 	}
 }
 
 func (s *CityLibServer) PostMethodAllowed(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 	if r.Method != http.MethodPost {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
+		return http_errors.NewError(http.StatusMethodNotAllowed, "method not allowed")
 	}
 
 	return nil
@@ -45,7 +45,7 @@ func (s *CityLibServer) PostMethodAllowed(w http.ResponseWriter, r *http.Request
 
 func (s *CityLibServer) GetMethodAllowed(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 	if r.Method != http.MethodGet {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
+		return http_errors.NewError(http.StatusMethodNotAllowed, "method not allowed")
 	}
 
 	return nil
