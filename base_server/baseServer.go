@@ -37,17 +37,9 @@ func (s *BaseServer) setEncodingHeaders(w http.ResponseWriter) {
 	w.Header().Add("Content-Type", encoding)
 }
 
-func (s *BaseServer) isValidEncoding(r *http.Request, wanted string, method string) bool {
-	return r.Header.Get("Content-Type") == wanted && r.Method == method
-}
-
 func (s *BaseServer) middleware(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 
 	s.setEncodingHeaders(w)
-
-	if !s.isValidEncoding(r, encoding, http.MethodPost) && !s.isValidEncoding(r, "", http.MethodGet) {
-		return http_errors.NewError(http.StatusNotAcceptable)
-	}
 
 	return nil
 }
@@ -57,11 +49,11 @@ func ReadBody[T mapper.JsonModel](body io.ReadCloser) (*T, error) {
 
 	bodyData, err := io.ReadAll(body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to read request: %v", err)
 	}
 
 	if err := json.Unmarshal(bodyData, &t); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to deserialize request to json: %v", err)
 	}
 
 	return &t, nil
@@ -73,7 +65,7 @@ func PackResponse[T mapper.JsonModel](response T, w http.ResponseWriter, logger 
 
 	if _, err := w.Write(data); err != nil {
 		logger.Println("FAILURE", err)
-		return http_errors.NewError(http.StatusInternalServerError)
+		return http_errors.NewError(http.StatusInternalServerError, "failed to write the response")
 	}
 
 	return nil
@@ -88,7 +80,7 @@ func (b *BaseServer) GetReadHttpErrFunc(body io.ReadCloser) func() *http_errors.
 		data, err := ReadBody[http_errors.HttpErrorResponse](body)
 
 		if err != nil {
-			return http_errors.NewError(http.StatusInternalServerError)
+			return http_errors.NewError(http.StatusInternalServerError, "failed to read internal response")
 		}
 
 		defer body.Close()
@@ -126,7 +118,7 @@ func (s *BaseServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			writeHttpStatusError(err)
 		}
 	} else {
-		writeHttpStatusError(http_errors.NewError(http.StatusNotFound))
+		writeHttpStatusError(http_errors.NewError(http.StatusNotFound, fmt.Sprintf("pipeline %s doesn't exist", r.URL.Path)))
 	}
 }
 

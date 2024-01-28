@@ -3,7 +3,6 @@ package http_errors
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 type HttpErrorResponse struct {
@@ -11,9 +10,9 @@ type HttpErrorResponse struct {
 	StatusCode int    `json:"status_code"`
 }
 
-func NewError(statusCode int) *HttpErrorResponse {
+func NewError(statusCode int, statusText string) *HttpErrorResponse {
 	return &HttpErrorResponse{
-		StatusText: http.StatusText(statusCode),
+		StatusText: statusText,
 		StatusCode: statusCode,
 	}
 }

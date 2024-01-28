@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"rac_oblak_proj/errors/http_errors"
 	"strings"
@@ -18,12 +19,12 @@ func (s *CentralLibServer) AllowedHost(w http.ResponseWriter, r *http.Request) *
 		}
 	}
 
-	return http_errors.NewError(http.StatusBadRequest)
+	return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("host is not allowed"))
 }
 
 func (s *CentralLibServer) PostMethodAllowed(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 	if r.Method != http.MethodPost {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
+		return http_errors.NewError(http.StatusMethodNotAllowed, "method is not allowed")
 	}
 
 	return nil
@@ -31,7 +32,7 @@ func (s *CentralLibServer) PostMethodAllowed(w http.ResponseWriter, r *http.Requ
 
 func (s *CentralLibServer) GetMethodAllowed(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 	if r.Method != http.MethodGet {
-		return http_errors.NewError(http.StatusMethodNotAllowed)
+		return http_errors.NewError(http.StatusMethodNotAllowed, "method is not allowed")
 	}
 
 	return nil

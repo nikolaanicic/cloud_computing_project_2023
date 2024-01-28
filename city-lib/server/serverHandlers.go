@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	baseserver "rac_oblak_proj/base_server"
 	"rac_oblak_proj/errors/http_errors"
@@ -14,7 +15,7 @@ func (s *CityLibServer) handleGetAllBooksRequest(w http.ResponseWriter, r *http.
 
 	if err != nil {
 		s.BaseServer.Logger.Println(err)
-		return http_errors.NewError(http.StatusInternalServerError)
+		return http_errors.NewError(http.StatusInternalServerError, fmt.Sprintf("failed to get the books: %v", err))
 	}
 
 	return baseserver.PackResponse(books, w, s.BaseServer.Logger)
@@ -24,7 +25,7 @@ func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.R
 	req, err := baseserver.ReadBody[requestmodels.InsertBookRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("failed to insert a new book: %v", err))
 	}
 
 	defer r.Body.Close()
@@ -33,7 +34,7 @@ func (s *CityLibServer) handleInsertBookRequest(w http.ResponseWriter, r *http.R
 
 	if err != nil {
 		s.BaseServer.Logger.Println(err)
-		return http_errors.NewError(http.StatusConflict)
+		return http_errors.NewError(http.StatusConflict, fmt.Sprintf("failed to insert a new book: %v", err))
 	}
 
 	return baseserver.PackResponse(result, w, s.BaseServer.Logger)
@@ -44,26 +45,29 @@ func (c *CityLibServer) handleUserLogin(w http.ResponseWriter, r *http.Request) 
 	req, err := baseserver.ReadBody[requestmodels.UserLoginRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("failed to login the user: %v", err))
 	}
 
 	defer r.Body.Close()
 
 	if c.sessionmgr.IsValid(req.Username) {
-		return http_errors.NewError(http.StatusConflict)
+		token := getToken(r)
+		c.sessionmgr.RefreshSession(token)
+
+		return nil
 	}
 
 	response, err := baseserver.PostData(req, "http://"+c.config.CentralServerHost+"/users/login")
 
 	if err != nil {
-		return http_errors.NewError(http.StatusServiceUnavailable)
+		return http_errors.NewError(http.StatusServiceUnavailable, fmt.Sprintf("failed to login the user: %v", err))
 	}
 
 	success := func() *http_errors.HttpErrorResponse {
 		user, err := baseserver.ReadBody[models.User](response.Body)
 
 		if err != nil {
-			return http_errors.NewError(http.StatusBadRequest)
+			return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("failed to login the user: %v", err))
 		}
 
 		defer response.Body.Close()
@@ -125,17 +129,21 @@ func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *
 	req, err := baseserver.ReadBody[requestmodels.RentBookRequest](r.Body)
 
 	if err != nil {
-		return http_errors.NewError(http.StatusBadRequest)
+		return http_errors.NewError(http.StatusBadRequest, fmt.Sprintf("failed to rent a book: %v", err))
 	}
 
 	defer r.Body.Close()
 
 	book, err := c.books.GetByISBN(req.ISBN)
 	if err != nil {
+<<<<<<< HEAD
 		return http_errors.NewError(http.StatusNotFound)
 	} else if ok, err := c.rentals.IsBookAvailable(book.ID); !ok || err != nil {
 		c.BaseServer.Logger.Println(err)
 		return http_errors.NewError(http.StatusConflict)
+=======
+		return http_errors.NewError(http.StatusNotFound, fmt.Sprintf("failed to rent a book: %v", err))
+>>>>>>> main
 	}
 
 	token := getToken(r)
@@ -146,7 +154,7 @@ func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *
 	response, err := baseserver.PostData(req, "http://"+c.config.CentralServerHost+"/books/rent")
 
 	if err != nil {
-		return http_errors.NewError(http.StatusServiceUnavailable)
+		return http_errors.NewError(http.StatusServiceUnavailable, fmt.Sprintf("failed to rent a book: %v", err))
 	}
 
 	success := func() *http_errors.HttpErrorResponse {
@@ -155,7 +163,7 @@ func (c *CityLibServer) handleRentBook(w http.ResponseWriter, r *http.Request) *
 		rental, err := c.rentals.Insert(*newRental)
 
 		if err != nil {
-			return http_errors.NewError(http.StatusInternalServerError)
+			return http_errors.NewError(http.StatusInternalServerError, fmt.Sprintf("failed to rent a book: %v", err))
 		}
 
 		return baseserver.PackResponse(rental, w, c.BaseServer.Logger)
