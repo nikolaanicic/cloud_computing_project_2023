@@ -37,10 +37,6 @@ func (s *BaseServer) setEncodingHeaders(w http.ResponseWriter) {
 	w.Header().Add("Content-Type", encoding)
 }
 
-func (s *BaseServer) isValidEncoding(r *http.Request, wanted string, method string) bool {
-	return r.Header.Get("Content-Type") == wanted && r.Method == method
-}
-
 func (s *BaseServer) middleware(w http.ResponseWriter, r *http.Request) *http_errors.HttpErrorResponse {
 
 	s.setEncodingHeaders(w)
