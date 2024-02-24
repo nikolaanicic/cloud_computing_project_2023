@@ -7,7 +7,7 @@ import (
 
 type RentBookRequest struct {
 	Username string `json:"username"`
-	ISBN     string `json:"isb"`
+	ISBN     string `json:"isbn"`
 }
 
 func (r *RentBookRequest) String() string {

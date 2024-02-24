@@ -63,7 +63,7 @@ func (r *RentalRepo) GetById(id int64) (models.Rental, error) {
 }
 
 func (r *RentalRepo) GetByMemberAndBookId(memberId, bookId int64) (models.Rental, error) {
-	query := "SELECT * from rentals where memberid = ? and bookid ? ORDER BY rentaldate desc"
+	query := "SELECT * from rentals where memberid = ? and bookid = ? ORDER BY rentaldate desc"
 
 	result, err := data.ExecuteQuery[models.Rental](r.ctx, query, memberId, bookId)
 
